@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html>
+	<head>
+		<meta charset="utf-8">
+		<title>Sparrow Photography</title>
+		<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+		<link rel="stylesheet" type="text/css" href="styles.css">
+	</head>
+	<body>
+
+		<nav class="nav">
+			<a class="logo" href="index.html"><strong>Sparrow Photography</strong></a>
+		</nav>
+
+		<h1>Sparrow Photography</h1>
+
+		<div id="app">Loading...</div>
+
+
+		<footer>
+			<p><em>Photos by Jack Sparrow. All rights reserved.</em></p>
+		</footer>
+
+
+		<script>
+			// Get the #app element
+			let app = document.querySelector('#app');
+
+			/**
+			 * Get the photo ID
+			 */
+			
+			function getPhotoId () {
+				return new URL(window.location.href).searchParams.get('id');
+			}
+
+			function photoHTML (photos) {
+				let id = getPhotoId();
+				if (!id) return `<p>Whoops, no photo here.</p>`;
+				let photo = getPhotoById(photos, id);
+				if (!photo) return `<p>Nope, Chuck Testa.</p>`;
+
+				// Change the tab title
+				document.title = `${photo.name} | ${document.title}`;
+				
+				// Load the photo
+				return `
+				<h1>${photo.name}</h1>
+				<p><img src="${photo.url}" alt=""></p>
+				<p>${photo.description}</p>`;
+			}
+
+			function getPhotoById (photos, id) {
+				return photos.find(function (photo) {
+					return photo.id === id;
+				})
+			}
+
+			/**
+			 * Fetch photos from the API
+			 */
+			async function getPhotos () {
+				try {
+					let response = await fetch('https://vanillajsacademy.com/api/photos.json');
+					if (!response.ok) throw response;
+					let photos = await response.json();
+					app.innerHTML = photoHTML(photos);
+				} catch (error) {
+					console.warn(error);
+					app.innerHTML = photoHTML();
+				}
+			}
+
+			// Initialize
+			getPhotos();
+		</script>
+
+	</body>
+</html>
