@@ -24,7 +24,6 @@
 			import { getPhotos } from "./fetchPhotos.js";
 			// Get the #app element
 			let app = document.querySelector("#app");
-			let photos = getPhotos();
 
 			/**
 			 * Generate an HTML of available photos
@@ -54,7 +53,9 @@
 							.join("")}
 					</div>`;
 			}
-			app.innerHTML = photoHTML(photos);
+			getPhotos().then(function (photos) {
+				app.innerHTML = photoHTML(photos);
+			});
 		</script>
 	</body>
 </html>
