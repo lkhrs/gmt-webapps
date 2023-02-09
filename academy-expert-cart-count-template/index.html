@@ -29,6 +29,7 @@
 		<script type="module">
 			import {component, store} from 'https://cdn.jsdelivr.net/npm/reefjs@12/dist/reef.es.min.js';
 			import {getPhotos} from './components/api.js';
+			import {cartCounter} from './components/cart.js';
 			let photos = [];
 
 			// Get the #app element
@@ -64,7 +65,7 @@
 					</div>`;
 
 			}
-			function cartBtn (cartCounter) {
+			function cartBtn () {
 				return `
 				(${cartCounter()})`
 			}

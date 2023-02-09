@@ -99,7 +99,7 @@
 
 			}
 
-			function cartBtn (cartCounter) {
+			function cartBtn () {
 				return `
 				(${cartCounter()})`
 			}
@@ -119,6 +119,7 @@
 
 				// Update the UI
 				component(app, photoHTML);
+				component(cartElem, cartBtn);
 
 			}
 

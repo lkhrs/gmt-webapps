@@ -22,7 +22,7 @@ function inCart (id) {
 /**
  * Count the items in the cart
  */
-function cartCounter (cart) {
+function cartCounter () {
 	return Object.keys(cart).length;
 }
 
