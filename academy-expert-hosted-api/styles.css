@@ -116,3 +116,7 @@ td {
 .text-right {
 	text-align: right;
 }
+
+[data-checkout] {
+	float: right;
+}

@@ -1,61 +1,63 @@
 <!DOCTYPE html>
 <html>
-	<head>
-		<meta charset="utf-8">
-		<title>Checkout | Sparrow Photography</title>
-		<meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-		<link rel="stylesheet" type="text/css" href="styles.css">
-	</head>
-	<body>
+<head>
+	<meta charset="utf-8">
+	<title>Checkout | Sparrow Photography</title>
+	<meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-		<nav class="nav">
-			<a class="logo" href="index.html"><strong>Sparrow Photography</strong></a>
-			<div class="nav-items">
-				<a aria-current="page" href="checkout.html"><span aria-hidden="true">&#x1f6d2;</span> Cart <span id="cart-count"></span></a>
-			</div>
-		</nav>
+	<link rel="stylesheet" type="text/css" href="styles.css">
+</head>
 
-		<h1>Checkout</h1>
-		<div id="app">Loading...</div>
+<body>
 
+	<nav class="nav">
+		<a class="logo" href="index.html"><strong>Sparrow Photography</strong></a>
+		<div class="nav-items">
+			<a aria-current="page" href="checkout.html"><span aria-hidden="true">&#x1f6d2;</span> Cart <span id="cart-count"></span></a>
+		</div>
+	</nav>
 
-		<footer>
-			<p><em>Photos by Jack Sparrow. All rights reserved.</em></p>
-		</footer>
+	<h1>Checkout</h1>
+	<div id="app">Loading...</div>
 
 
-		<script type="module">
-			import {component} from 'https://cdn.jsdelivr.net/npm/reefjs@12/dist/reef.es.min.js';
-			import {getPhotos} from './components/api.js';
-			import {removeFromCart, inCart} from './components/cart.js';
-			import {getPhotoByID} from './components/utilities.js';
+	<footer>
+		<p><em>Photos by Jack Sparrow. All rights reserved.</em></p>
+	</footer>
 
 
-			// Hold the photo data
-			let photos = [];
+	<script type="module">
+		import { store, component } from 'https://cdn.jsdelivr.net/npm/reefjs@12/dist/reef.es.min.js';
+		import { getPhotos } from './components/api.js';
+		import { removeFromCart, inCart, getPhotosInCart } from './components/cart.js';
+		import { getPhotoByID } from './components/utilities.js';
+		import { stripeURL } from './components/endpoints.js';
 
-			// Current status
-			let status = store([]);
 
-			/**
-			 * Generate the cart HTML
-			 * @return {String} The cart HTML string
-			 */
-			function cartHTML () {
+		// Hold the photo data
+		let photos = [];
 
-				// Get the photos that are in the cart
-				let photosInCart = photos.filter(function (photo) {
-					return inCart(photo.id);
-				});
+		// Current status
+		let status = store([]);
+		let submitting = false;
 
-				// If there are no items in the cart
-				if (!photosInCart.length) {
-					return '<p>You have no photos in your cart.</p>';
-				}
+		/**
+		 * Generate the cart HTML
+		 * @return {String} The cart HTML string
+		 */
+		function cartHTML() {
 
-				// Otherwise, generate table
-				return `
+			// Get the photos that are in the cart
+			let photosInCart = getPhotosInCart(photos);
+
+			// If there are no items in the cart
+			if (!photosInCart.length) {
+				return '<p>You have no photos in your cart.</p>';
+			}
+
+			// Otherwise, generate table
+			return `
 					<table>
 						<thead>
 							<tr>
@@ -66,8 +68,8 @@
 							</tr>
 						</thead>
 						<tbody>
-							${photosInCart.map(function (photo) {
-								return `
+							${photosInCart.map(function(photo) {
+				return `
 									<tr>
 										<td><img alt="${photo.description}" src="${photo.url}"></td>
 										<td>${photo.name}</td>
@@ -79,51 +81,111 @@
 										</td>
 									</tr>`;
 
-							}).join('')}
+			}).join('')}
 						</tbody>
 					</table>
 					<p class="text-right">
-						<strong>Total:</strong> $${photosInCart.reduce(function (total, photo) {
-							return total + photo.price;
-						}, 0)}
+						<strong>Total:</strong> $${photosInCart.reduce(function(total, photo) {
+				return total + photo.price;
+			}, 0)}
 					</p>
+					<button data-checkout>Checkout →</button>
 					<div aria-live="polite">${status.join('<br>')}</div>`;
 
+		}
+
+		/** 
+		 * Remove items from cart
+		 */
+
+		function removeCartItem(event) {
+			// Get the photo ID
+			let id = event.target.getAttribute('data-remove-from-cart');
+			if (!id) return;
+
+			if (submitting) return;
+
+			// Remove the item from the cart
+			removeFromCart(id);
+
+			// Get the photo details
+			let photo = getPhotoByID(photos, id);
+			if (!photo) return;
+
+			// Update the status message
+			let msg = `"${photo.name}" was removed from your cart.`;
+			status.push(msg);
+			setTimeout(function() {
+				status.splice(status.indexOf(msg), 1);
+			}, 3000);
+		}
+
+		/**
+		 * Handle click events
+		 * @param  {Event} event The event object
+		 */
+		function clickHandler(event) {
+			removeCartItem(event);
+			checkout(event)
+		}
+
+		async function checkout(event) {
+			if (!event.target.hasAttribute('data-checkout')) return;
+
+			if (submitting) return;
+
+			status[0] = 'Redirecting...'
+			submitting = true;
+			try {
+				// Call the middleman API
+				let sessionReq = await fetch(stripeURL, {
+					method: 'POST',
+					headers: {
+						'Content-type': 'application/json'
+					},
+					body: JSON.stringify({
+						line_items: getPhotosInCart(photos).map(function(item) {
+							return {
+								price_data: {
+									currency: 'usd',
+									product_data: {
+										name: item.name,
+										description: item.description,
+										images: [item.url]
+									},
+									unit_amount: item.price * 100,
+								},
+								quantity: 1,
+							};
+						}),
+						success_url: 'http://localhost:3000/success.html',
+						cancel_url: 'http://localhost:3000/checkout.html',
+					})
+				});
+
+				// Bail if there's a problem
+				if (!sessionReq.ok) throw sessionReq;
+				// Get the session object
+				let session = await sessionReq.json();
+				// Redirect to Stripe
+				window.location.href = session.url
+
+			} catch (error) {
+				console.warn(error);
+				status[0] = 'Couldn\'t check out at this time. Please try again later.';
+				submitting = false;
 			}
 
-			/**
-			 * Handle click events
-			 * @param  {Event} event The event object
-			 */
-			function clickHandler (event) {
+		}
 
-				// Get the photo ID
-				let id = event.target.getAttribute('data-remove-from-cart');
-				if (!id) return;
+		// Initialize
+		getPhotos().then(function(data) {
+			photos = data;
+			component('#app', cartHTML);
+			document.addEventListener('click', clickHandler);
+		});
+	</script>
 
-				// Remove the item from the cart
-				removeFromCart(id);
+</body>
 
-				// Get the photo details
-				let photo = getPhotoByID(photos, id);
-				if (!photo) return;
-
-				// Update the status message
-				let msg = `"${photo.name}" was removed from your cart.`;
-				status.push(msg);
-				setTimeout(function () {
-					status.splice(status.indexOf(msg), 1);
-				}, 3000);
-
-			}
-
-			// Initialize
-			getPhotos().then(function (data) {
-				photos = data;
-				component('#app', cartHTML);
-				document.addEventListener('click', clickHandler);
-			});
-		</script>
-
-	</body>
 </html>
