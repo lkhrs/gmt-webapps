@@ -1,37 +1,39 @@
 <!DOCTYPE html>
 <html>
 	<head>
-		<meta charset="utf-8">
+		<meta charset="utf-8" />
 		<title>Checkout | Sparrow Photography</title>
-		<meta name="viewport" content="width=device-width, initial-scale=1.0">
+		<meta name="viewport" content="width=device-width, initial-scale=1.0" />
 
-		<link rel="stylesheet" type="text/css" href="styles.css">
+		<link rel="stylesheet" type="text/css" href="styles.css" />
 	</head>
 	<body>
-
 		<nav class="nav">
 			<a class="logo" href="index.html"><strong>Sparrow Photography</strong></a>
 			<div class="nav-items">
-				<a aria-current="page" href="checkout.html"><span aria-hidden="true">&#x1f6d2;</span> Cart <span id="cart-count"></span></a>
+				<a aria-current="page" href="checkout.html"
+					><span aria-hidden="true">&#x1f6d2;</span> Cart
+					<span id="cart-count"></span
+				></a>
 			</div>
 		</nav>
 
 		<h1>Checkout</h1>
 		<div id="app">Loading...</div>
 
-
 		<footer>
 			<p><em>Photos by Jack Sparrow. All rights reserved.</em></p>
 		</footer>
 
-
 		<script type="module">
-			import {store, component} from 'https://cdn.jsdelivr.net/npm/reefjs@12/dist/reef.es.min.js';
-			import {getPhotos} from './components/api.js';
-			import {removeFromCart, getPhotosInCart} from './components/cart.js';
-			import {getPhotoByID} from './components/utilities.js';
-			import {stripeURL} from './components/endpoints.js';
-
+			import {
+				store,
+				component,
+			} from "https://cdn.jsdelivr.net/npm/reefjs@12/dist/reef.es.min.js";
+			import { getPhotos } from "./components/api.js";
+			import { removeFromCart, getPhotosInCart } from "./components/cart.js";
+			import { getPhotoByID } from "./components/utilities.js";
+			import { stripeURL } from "./components/endpoints.js";
 
 			// Hold the photo data
 			let photos = [];
@@ -44,14 +46,13 @@
 			 * Generate the cart HTML
 			 * @return {String} The cart HTML string
 			 */
-			function cartHTML () {
-
+			function cartHTML() {
 				// Get the photos that are in the cart
 				let photosInCart = getPhotosInCart(photos);
 
 				// If there are no items in the cart
 				if (!photosInCart.length) {
-					return '<p>You have no photos in your cart.</p>';
+					return "<p>You have no photos in your cart.</p>";
 				}
 
 				// Otherwise, generate table
@@ -66,8 +67,9 @@
 							</tr>
 						</thead>
 						<tbody>
-							${photosInCart.map(function (photo) {
-								return `
+							${photosInCart
+								.map(function (photo) {
+									return `
 									<tr>
 										<td><img alt="${photo.description}" src="${photo.url}"></td>
 										<td>${photo.name}</td>
@@ -78,8 +80,8 @@
 											</button>
 										</td>
 									</tr>`;
-
-							}).join('')}
+								})
+								.join("")}
 						</tbody>
 					</table>
 					<p class="text-right">
@@ -90,18 +92,16 @@
 					<p class="text-right">
 						<button data-checkout>Complete Checkout</button>
 					</p>
-					<div aria-live="polite">${status.join('<br>')}</div>`;
-
+					<div aria-live="polite">${status.join("<br>")}</div>`;
 			}
 
 			/**
 			 * Remove an item from the cart
 			 * @param  {Event} event The event object
 			 */
-			function removeCartItem (event) {
-
+			function removeCartItem(event) {
 				// Get the photo ID
-				let id = event.target.getAttribute('data-remove-from-cart');
+				let id = event.target.getAttribute("data-remove-from-cart");
 				if (!id) return;
 
 				// If already submitting, ignore click
@@ -120,56 +120,39 @@
 				setTimeout(function () {
 					status.splice(status.indexOf(msg), 1);
 				}, 3000);
-
 			}
 
 			/**
 			 * Complete user checkout
 			 * @param  {Event} event The event object
 			 */
-			async function checkout (event) {
-
+			async function checkout(event) {
 				// Only run for [data-checkout] button
-				if (!event.target.hasAttribute('data-checkout')) return;
+				if (!event.target.hasAttribute("data-checkout")) return;
 
 				// If already submitting, ignore click
 				if (submitting) return;
 
 				// Update status
-				status[0] = 'Redirecting to checkout...';
+				status[0] = "Redirecting to checkout...";
 				submitting = true;
 
 				try {
-
 					// Call the API
 					let sessionRequest = await fetch(stripeURL, {
-						method: 'POST',
+						method: "POST",
 						headers: {
-							'Content-type': 'application/json'
+							"Content-type": "application/json",
 						},
 						body: JSON.stringify({
 							cart: getPhotosInCart(photos).map(function (item) {
 								return {
-									id: item.id
+									id: item.id,
 								};
 							}),
-							// line_items: getPhotosInCart(photos).map(function (item) {
-							// 	return {
-							// 		price_data: {
-							// 			currency: 'usd',
-							// 			product_data: {
-							// 				name: item.name,
-							// 				description: item.description,
-							// 				images: [item.url]
-							// 			},
-							// 			unit_amount: item.price * 100,
-							// 		},
-							// 		quantity: 1,
-							// 	};
-							// }),
-							success_url: 'http://localhost:8000/success.html',
-							cancel_url: 'http://localhost:8000/checkout.html',
-						})
+							success_url: "http://localhost:8000/success.html",
+							cancel_url: "http://localhost:8000/checkout.html",
+						}),
 					});
 
 					// If there's a problem, throw an error
@@ -180,20 +163,18 @@
 
 					// Redirect to Stripe Checkout
 					window.location.href = session.url;
-
 				} catch (error) {
 					console.warn(error);
-					status[0] = 'Unable to checkout. Please try again.';
+					status[0] = "Unable to checkout. Please try again.";
 					submitting = false;
 				}
-
 			}
 
 			/**
 			 * Handle click events
 			 * @param  {Event} event The event object
 			 */
-			function clickHandler (event) {
+			function clickHandler(event) {
 				removeCartItem(event);
 				checkout(event);
 			}
@@ -201,10 +182,9 @@
 			// Initialize
 			getPhotos().then(function (data) {
 				photos = data;
-				component('#app', cartHTML);
-				document.addEventListener('click', clickHandler);
+				component("#app", cartHTML);
+				document.addEventListener("click", clickHandler);
 			});
 		</script>
-
 	</body>
 </html>
