@@ -1,0 +1,6 @@
+name = "gmt-stripe-api-secure"
+compatibility_date = "2023-02-22"
+main = "_stripe.js"
+kv_namespaces = [
+	{ binding = "PHOTOS", id = "67e612e10adb4abc9d1c090a6540d515", preview_id = "1989a6df17974bbf8bb749813233476d" },
+]

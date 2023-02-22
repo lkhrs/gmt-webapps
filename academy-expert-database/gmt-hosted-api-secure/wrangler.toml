@@ -1,0 +1,6 @@
+name = "gmt-hosted-api-secure"
+main = "_index.js"
+compatibility_date = "2023-02-22"
+kv_namespaces = [
+	{ binding = "PHOTOS", id = "67e612e10adb4abc9d1c090a6540d515" },
+]
