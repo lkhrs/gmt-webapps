@@ -1,6 +1,8 @@
-let photos = async () => {
-	await PHOTOS.get("photos");
-};
+let headers = new Headers({
+	"Access-Control-Allow-Origin": "*",
+	"Access-Control-Allow-Methods": "HEAD, POST, OPTIONS",
+	"Access-Control-Allow-Headers": "*",
+});
 
 /**
  * Create a PHP-style query string from an object
@@ -37,44 +39,10 @@ function buildQuery(data, prefix) {
 }
 
 /**
- * Get a photo by its ID
- * @param  {Array}  photos All photos
- * @param  {String} id     The ID of the photo to get
- * @return {Object}        The photo data
- */
-function getPhotoByID(photos, id) {
-	return photos.find(function (photo) {
-		return photo.id === id;
-	});
-}
-
-/**
  * Respond to the request
  * @param {Request} request
  */
 async function handleRequest(request) {
-	let headers = new Headers({
-		"Access-Control-Allow-Origin": "*",
-		"Access-Control-Allow-Methods": "HEAD, POST, OPTIONS",
-		"Access-Control-Allow-Headers": "*",
-	});
-
-	let allowed = [
-		"http://localhost:3000",
-		"https://lkhrs.github.io",
-		"http://127.0.0.1:8787",
-		"http://0.0.0.0:8787",
-		"ws://127.0.0.1:63215",
-	];
-
-	// If domain is not allowed, return error code
-	// if (!allowed.includes(request.headers.get("origin"))) {
-	// 	return new Response("Not allowed", {
-	// 		status: 403,
-	// 		headers: headers,
-	// 	});
-	// }
-
 	// Catch-all for non-POST request types
 	if (request.method !== "POST") {
 		return new Response("ok", {
@@ -86,9 +54,31 @@ async function handleRequest(request) {
 	// Get checkout session token
 	try {
 		// Get the request data
-		let body = await request.json();
-		let { line_items, success_url, cancel_url } = body;
+		let { cart, success_url, cancel_url } = await request.json();
 
+		// Get the photos from the KV store
+		let photos = await PHOTOS.get("photos", { type: "json" });
+		console.log(photos);
+
+		// Construct request body from cart items
+		let line_items = photos
+			.filter(function (photo) {
+				return cart.includes(photo.id);
+			})
+			.map(function (item) {
+				return {
+					price_data: {
+						currency: "usd",
+						product_data: {
+							name: item.name,
+							description: item.description,
+							images: [item.url],
+						},
+						unit_amount: item.price * 100,
+					},
+					quantity: 1,
+				};
+			});
 		// Call the Stripe API
 		let stripeRequest = await fetch(
 			"https://api.stripe.com/v1/checkout/sessions",
@@ -101,20 +91,7 @@ async function handleRequest(request) {
 				body: buildQuery({
 					payment_method_types: ["card"],
 					mode: "payment",
-					line_items: getPhotoByID(photos, line_items.id).map(function (item) {
-						return {
-							price_data: {
-								currency: "usd",
-								product_data: {
-									name: item.name,
-									description: item.description,
-									images: [item.url],
-								},
-								unit_amount: item.price * 100,
-							},
-							quantity: 1,
-						};
-					}),
+					line_items,
 					success_url,
 					cancel_url,
 				}),

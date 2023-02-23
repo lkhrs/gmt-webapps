@@ -145,10 +145,8 @@
 							"Content-type": "application/json",
 						},
 						body: JSON.stringify({
-							cart: getPhotosInCart(photos).map(function (item) {
-								return {
-									id: item.id,
-								};
+							cart: getPhotosInCart(photos).map(function (photo) {
+								return photo.id;
 							}),
 							success_url: "http://localhost:8000/success.html",
 							cancel_url: "http://localhost:8000/checkout.html",
