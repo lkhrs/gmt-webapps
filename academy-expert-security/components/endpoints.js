@@ -1,8 +1,7 @@
 // The photos API endpoint
-let photosURL = 'https://path-to-your.workers.dev';
+let photosURL = "https://gmt-hosted-api-secure.lw.workers.dev";
 
 // The stripe API endpoint
-let stripeURL = 'https://path-to-stripe.workers.dev';
+let stripeURL = "https://gmt-stripe-api-secure.lw.workers.dev";
 
-
-export {photosURL, stripeURL};
+export { photosURL, stripeURL };

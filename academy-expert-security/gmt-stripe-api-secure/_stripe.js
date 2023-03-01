@@ -1,5 +1,5 @@
 let headers = new Headers({
-	'Access-Control-Allow-Origin': 'http://localhost:8000',
+	'Access-Control-Allow-Origin': 'http://localhost:3000',
 	'Access-Control-Allow-Methods': 'HEAD, POST, OPTIONS',
 	'Access-Control-Allow-Headers': '*'
 });

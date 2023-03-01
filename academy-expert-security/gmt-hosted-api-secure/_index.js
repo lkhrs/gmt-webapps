@@ -5,7 +5,7 @@
 async function handleRequest(request) {
 
 	let headers = new Headers({
-		'Access-Control-Allow-Origin': 'http://localhost:8000',
+		'Access-Control-Allow-Origin': 'http://localhost:3000',
 		'Access-Control-Allow-Methods': 'GET, OPTIONS, HEAD',
 		'Access-Control-Allow-Headers': '*'
 	});
