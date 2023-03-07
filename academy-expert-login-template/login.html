@@ -1,14 +1,13 @@
 <!DOCTYPE html>
 <html>
 	<head>
-		<meta charset="utf-8">
+		<meta charset="utf-8" />
 		<title>Login | Sparrow Photography</title>
-		<meta name="viewport" content="width=device-width, initial-scale=1.0">
+		<meta name="viewport" content="width=device-width, initial-scale=1.0" />
 
-		<link rel="stylesheet" type="text/css" href="styles.css">
+		<link rel="stylesheet" type="text/css" href="styles.css" />
 	</head>
 	<body>
-
 		<nav class="nav">
 			<a class="logo" href="index.html"><strong>Sparrow Photography</strong></a>
 		</nav>
@@ -17,21 +16,99 @@
 
 		<form data-form="login">
 			<label for="username">Username</label>
-			<input type="text" name="username" id="username">
+			<input type="text" name="username" id="username" />
 
 			<label for="password">Password</label>
-			<input type="password" name="password" id="password">
+			<input type="password" name="password" id="password" />
 
 			<p><button>Login</button></p>
 
 			<div role="status"></div>
 		</form>
 
-
-
 		<script type="module">
-			// Code goes here...
-		</script>
+			import { authURL } from "./components/endpoints.js";
 
+			let form = document.querySelector('[data-form="login"]');
+			let formStatus = form.querySelector('[role="status"]');
+
+			/*!
+			 * Serialize all form data into an object
+			 * (c) 2021 Chris Ferdinandi, MIT License, https://gomakethings.com
+			 * @param  {FormData} data The FormData object to serialize
+			 * @return {String}        The serialized form data
+			 */
+			function serialize(data) {
+				let obj = {};
+				for (let [key, value] of data) {
+					if (obj[key] !== undefined) {
+						if (!Array.isArray(obj[key])) {
+							obj[key] = [obj[key]];
+						}
+						obj[key].push(value);
+					} else {
+						obj[key] = value;
+					}
+				}
+				return obj;
+			}
+
+			async function submitHandler(event) {
+				event.preventDefault();
+
+				// Bail if the form is already submitting
+				if (form.getAttribute("data-submitting") === "true") return;
+
+				let { username, password } = serialize(new FormData(form));
+
+				// Check if the form has been filled
+				if (!username || !password) {
+					displayStatus("Please fill out all fields.");
+					return;
+				}
+				// Disable the form while submitting
+				form.setAttribute("data-submitting", true);
+
+				// Display a submitting message
+				displayStatus("Submitting...");
+
+				try {
+					// Get new auth token using basic auth
+					let login = await fetch(authURL, {
+						method: "POST",
+						headers: {
+							Authorization: `Basic ${btoa(`${username}:${password}`)}`,
+						},
+					});
+
+					// If the login failed
+					if (!login.ok) {
+						displayStatus("Invalid username or password.");
+						form.setAttribute("data-submitting", false);
+						return;
+					}
+
+					// Get the token from the response
+					let { token } = await login.json();
+
+					// Announce success
+					displayStatus(`Success! Token: ${token}`);
+				} catch (error) {
+					form.reset();
+					form.removeAttribute("data-submitting");
+					displayStatus("Something went wrong. Please try again.");
+				}
+			}
+
+			/**
+			 * Display form status message
+			 * @param  {String} message The message to display
+			 */
+			function displayStatus(message) {
+				formStatus.textContent = message;
+			}
+
+			form.addEventListener("submit", submitHandler);
+		</script>
 	</body>
 </html>
