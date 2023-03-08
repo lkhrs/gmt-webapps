@@ -1,14 +1,13 @@
 <!DOCTYPE html>
 <html>
 	<head>
-		<meta charset="utf-8">
+		<meta charset="utf-8" />
 		<title>Dashboard | Sparrow Photography</title>
-		<meta name="viewport" content="width=device-width, initial-scale=1.0">
+		<meta name="viewport" content="width=device-width, initial-scale=1.0" />
 
-		<link rel="stylesheet" type="text/css" href="styles.css">
+		<link rel="stylesheet" type="text/css" href="styles.css" />
 	</head>
 	<body>
-
 		<nav class="nav">
 			<a class="logo" href="index.html"><strong>Sparrow Photography</strong></a>
 			<div class="nav-items" aria-live="polite">
@@ -20,10 +19,34 @@
 
 		<p>You're logged in...</p>
 
-
 		<script type="module">
-			// Code goes here...
-		</script>
+			import { getToken, removeToken } from "./components/token.js";
+			import { authURL } from "./components/endpoints.js";
 
+			getToken();
+
+			// If the user is not logged in, redirect to login page
+			if (!getToken()) {
+				window.location.href = "login.html";
+			}
+
+			// If they are logged in, listen for click events on the logout link
+			let logoutLink = document.querySelector('a[href="logout.html"]');
+			logoutLink.addEventListener("click", (event) => {
+				event.preventDefault();
+				event.target.parentNode.textContent = "You are now logged out.";
+
+				// Call the logout endpoint
+				fetch(authURL, {
+					method: "DELETE",
+					headers: {
+						Authorization: `Bearer ${getToken()}`,
+					},
+				});
+
+				removeToken();
+				window.location.href = "login.html";
+			});
+		</script>
 	</body>
 </html>
