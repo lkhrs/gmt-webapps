@@ -2,7 +2,7 @@
   "name": "gmt-hosted-api",
   "version": "0.0.0",
   "devDependencies": {
-    "wrangler": "2.10.0"
+    "wrangler": "2.20.1"
   },
   "private": true,
   "scripts": {
